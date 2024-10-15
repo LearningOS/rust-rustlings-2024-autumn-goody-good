@@ -2,11 +2,10 @@
 	single linked list merge
 	This problem requires you to merge two ordered singly linked lists into one ordered singly linked list
 */
-// I AM NOT DONE
+
 
 use std::fmt::{self, Display, Formatter};
 use std::ptr::NonNull;
-use std::vec::*;
 
 #[derive(Debug)]
 struct Node<T> {
@@ -29,13 +28,13 @@ struct LinkedList<T> {
     end: Option<NonNull<Node<T>>>,
 }
 
-impl<T> Default for LinkedList<T> {
+impl<T: std::cmp::PartialOrd> LinkedList<T> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<T> LinkedList<T> {
+impl<T: std::cmp::PartialOrd> LinkedList<T> {
     pub fn new() -> Self {
         Self {
             length: 0,
@@ -69,14 +68,40 @@ impl<T> LinkedList<T> {
             },
         }
     }
-	pub fn merge(list_a:LinkedList<T>,list_b:LinkedList<T>) -> Self
-	{
-		//TODO
-		Self {
-            length: 0,
-            start: None,
-            end: None,
-        }
+	pub fn merge(mut list_a: LinkedList<T>, mut list_b: LinkedList<T>) -> Self {
+		let mut merged = LinkedList::new();
+		
+		while list_a.start.is_some() && list_b.start.is_some() {
+			let a_val = unsafe { &(*list_a.start.unwrap().as_ptr()).val };
+			let b_val = unsafe { &(*list_b.start.unwrap().as_ptr()).val };
+			
+			if *a_val <= *b_val {
+				merged.add(Self::pop_front(&mut list_a));
+			} else {
+				merged.add(Self::pop_front(&mut list_b));
+			}
+		}
+		
+		// 添加剩余的节点
+		while list_a.start.is_some() {
+			merged.add(Self::pop_front(&mut list_a));
+		}
+		while list_b.start.is_some() {
+			merged.add(Self::pop_front(&mut list_b));
+		}
+		
+		merged
+	}
+	
+	fn pop_front(list: &mut LinkedList<T>) -> T {
+		let front = list.start.take().unwrap();
+		let node = unsafe { Box::from_raw(front.as_ptr()) };
+		list.start = node.next;
+		list.length -= 1;
+		if list.start.is_none() {
+			list.end = None;
+		}
+		node.val
 	}
 }
 
